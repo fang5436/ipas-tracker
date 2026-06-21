@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iPAS AI 應用規劃師備考衝刺</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { background-color: #0b0f19; color: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
+        /* 自訂燈箱內捲軸樣式，讓手機端更美觀 */
+        #modal-content::-webkit-scrollbar { width: 6px; }
+        #modal-content::-webkit-scrollbar-thumb { background-color: #374151; border-radius: 10px; }
+    </style>
+    <script src="data-notes.js"></script>
+</head>
+<body class="p-4 md:p-8 min-h-screen relative">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-gray-800 pb-6 mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400">iPAS 初級 AI 應用規劃師</h1>
+                <p class="text-gray-400 mt-1">獨立備考進度追蹤儀表板 (2026 衝刺版)</p>
+            </div>
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-4 flex items-center gap-4 w-full md:w-auto shadow-xl shadow-blue-950/20">
+                <div class="text-blue-400 font-mono text-3xl font-bold tracking-wider" id="countdown">--天 --時</div>
+                <div class="text-xs text-gray-400 border-l border-gray-800 pl-4">距離 8/15<br>考試倒數</div>
+            </div>
+        </header>
+
+        <section class="bg-gray-900 border border-gray-800 rounded-2xl p-6 mb-8 shadow-xl">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-3">
+                <span class="text-sm font-semibold text-gray-300 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> 備考總達成率
+                </span>
+                <div class="flex items-center gap-4 justify-between sm:justify-end">
+                    <span class="text-2xl font-mono font-bold text-emerald-400" id="progress-text">0%</span>
+                    <button onclick="resetAllProgress()" class="px-3 py-1.5 bg-red-950/40 hover:bg-red-900/60 border border-red-800 text-red-400 hover:text-red-300 text-xs font-medium rounded-lg transition cursor-pointer flex items-center gap-1">
+                        🗑️ 清除所有進度
+                    </button>
+                </div>
+            </div>
+            <div class="w-full bg-gray-800 rounded-full h-4 overflow-hidden p-0.5 border border-gray-700">
+                <div id="progress-bar" class="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-500 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <main class="space-y-6">
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-blue-400 mb-6 flex items-center gap-2">📘 科目一：人工智慧基礎概論</h2>
+                <div class="space-y-6" id="section-subject1"></div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-indigo-400 mb-6 flex items-center gap-2">📙 科目二：生成式AI應用與規劃</h2>
+                <div class="space-y-6" id="section-subject2"></div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-2xl p-6">
+                <h2 class="text-xl font-bold text-emerald-400 mb-4 flex items-center gap-2">🎯 歷屆考古題全真衝刺</h2>
+                <div class="divide-y divide-gray-800" id="section-exams"></div>
+            </div>
+        </main>
+    </div>
+
+    <div id="notes-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-sm transition-opacity">
+        <div class="bg-gray-900 border border-gray-700 w-full max-w-2xl rounded-2xl max-h-[85vh] flex flex-col shadow-2xl shadow-blue-900/20">
+            <div class="flex justify-between items-center p-4 border-b border-gray-800 bg-gray-900 rounded-t-2xl">
+                <h3 id="modal-title" class="text-lg md:text-xl font-bold text-white flex items-center gap-2">📖 章節重點</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white bg-gray-800 hover:bg-gray-700 p-2 rounded-lg transition">
+                    ✕
+                </button>
+            </div>
+            <div id="modal-content" class="p-5 overflow-y-auto space-y-2 text-gray-300 leading-relaxed text-sm md:text-base pb-10">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        const partNames = {
+            part1: '第一篇：AI的定義與分類及治理',
+            part2: '第二篇：資料基本概念與處理流程',
+            part3: '第三篇：機器學習基本原理與模型',
+            part4: '第四篇：鑑別式 AI 與生成式 AI 概論',
+            part5: '第五篇：Low code / No code 基本概念與應用',
+            part6: '第六篇：生成式 AI 應用領域與常見工具',
+            part7: '第七篇：生成式 AI 導入評估與風險管理'
+        };
+
+        const examData = {
+            part1: [
+                { id: 'p1_c1', name: '第1章：AI的定義與分類' },
+                { id: 'p1_c2', name: '第2章：AI治理概念' }
+            ],
+            part2: [
+                { id: 'p2_c1', name: '第1章：資料基本概念與來源' },
+                { id: 'p2_c2', name: '第2章：資料整理與分析流程' },
+                { id: 'p2_c3', name: '第3章：資料隱私與安全' }
+            ],
+            part3: [
+                { id: 'p3_c1', name: '第1章：機器學習基本原理' },
+                { id: 'p3_c2', name: '第2章：常見的機器學習模型' }
+            ],
+            part4: [
+                { id: 'p4_c1', name: '第1章：鑑別式 AI 與生成式 AI 的基本原理' },
+                { id: 'p4_c2', name: '第2章：鑑別式 AI 與生成式 AI 的整合應用' }
+            ],
+            part5: [
+                { id: 'p5_c1', name: '第1章：Low code / No code 基本概念' },
+                { id: 'p5_c2', name: '第2章：Low code / No code 優勢與限制' }
+            ],
+            part6: [
+                { id: 'p6_c1', name: '第1章：生成式 AI 應用領域與常見工具' },
+                { id: 'p6_c2', name: '第2章：如何善用生成式 AI 工具' }
+            ],
+            part7: [
+                { id: 'p7_c1', name: '第1章：生成式 AI 導入評估' },
+                { id: 'p7_c2', name: '第2章：生成式 AI 導入規劃' },
+                { id: 'p7_c3', name: '第3章：生成式 AI 風險評估' }
+            ],
+            exams: [
+                { id: 'ex_114_4', name: '114年第四梯次 全真刷題' },
+                { id: 'ex_115_1', name: '115年第一次 全真刷題' },
+                { id: 'ex_115_2', name: '115年第二次 全真刷題' }
+            ]
+        };
+
+        const categoryMapping = {
+            'subject1': ['part1', 'part2', 'part3', 'part4'],
+            'subject2': ['part5', 'part6', 'part7'],
+            'exams': ['exams']
+        };
+
+        function updateCountdown() {
+            const targetDate = new Date('2026-08-15T00:00:00').getTime();
+            const now = new Date().getTime();
+            const difference = targetDate - now;
+
+            if (difference <= 0) {
+                document.getElementById('countdown').innerText = "考試結束";
+                return;
+            }
+
+            const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            document.getElementById('countdown').innerText = `${days}天 ${hours}時`;
+        }
+        setInterval(updateCountdown, 60000);
+        updateCountdown();
+
+        function renderLists() {
+            for (let targetSectionId in categoryMapping) {
+                const container = document.getElementById(`section-${targetSectionId}`);
+                if (!container) continue;
+                container.innerHTML = '';
+
+                const sourceParts = categoryMapping[targetSectionId];
+                
+                sourceParts.forEach(partKey => {
+                    if (!examData[partKey]) return;
+
+                    if (partKey !== 'exams' && partNames[partKey]) {
+                        const partHeader = document.createElement('div');
+                        partHeader.className = "text-md font-bold text-gray-200 border-l-4 border-slate-700 pl-2 mt-2 mb-2";
+                        partHeader.innerText = partNames[partKey];
+                        container.appendChild(partHeader);
+                    }
+
+                    const chapterWrapper = document.createElement('div');
+                    if (partKey !== 'exams') {
+                        chapterWrapper.className = "pl-2 sm:pl-6 divide-y divide-gray-800/50 mb-4";
+                    } else {
+                        chapterWrapper.className = "divide-y divide-gray-800";
+                    }
+
+                    examData[partKey].forEach(item => {
+                        const readStatus = localStorage.getItem(`${item.id}_read`) === 'true';
+                        const quizStatus = localStorage.getItem(`${item.id}_quiz`) === 'true';
+
+                        const row = document.createElement('div');
+                        row.className = "flex flex-col sm:flex-row justify-between items-start sm:items-center py-3.5 gap-3";
+                        
+                        // 判斷是否為考題區（不顯示閱讀按鈕）
+                        let readingButtonHTML = '';
+                        if (partKey !== 'exams') {
+                            readingButtonHTML = `
+                                <button onclick="openModal('${item.id}', '${item.name}')" class="shrink-0 px-2 py-1 bg-blue-900/30 text-blue-400 hover:bg-blue-800/50 rounded border border-blue-800/50 transition flex items-center justify-center text-sm" title="閱讀考題重點解析">
+                                    📖 解析
+                                </button>
+                            `;
+                        }
+
+                        row.innerHTML = `
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                ${readingButtonHTML}
+                                <span class="text-sm md:text-base font-medium text-gray-400 hover:text-gray-300 transition">${item.name}</span>
+                            </div>
+                            <div class="flex gap-3 w-full sm:w-auto justify-end">
+                                <label class="flex items-center gap-2 bg-gray-950/40 border border-gray-800 px-3 py-1.5 rounded-lg cursor-pointer text-xs select-none hover:border-gray-700 transition">
+                                    <input type="checkbox" id="${item.id}_read" ${readStatus ? 'checked' : ''} onchange="saveStatus('${item.id}_read')" class="w-4 h-4 accent-blue-500 rounded">
+                                    <span class="${readStatus ? 'text-blue-400' : 'text-gray-400'} font-medium">已閱讀</span>
+                                </label>
+                                <label class="flex items-center gap-2 bg-gray-950/40 border border-gray-800 px-3 py-1.5 rounded-lg cursor-pointer text-xs select-none hover:border-gray-700 transition">
+                                    <input type="checkbox" id="${item.id}_quiz" ${quizStatus ? 'checked' : ''} onchange="saveStatus('${item.id}_quiz')" class="w-4 h-4 accent-emerald-500 rounded">
+                                    <span class="${quizStatus ? 'text-emerald-400' : 'text-gray-400'} font-medium">做測驗</span>
+                                </label>
+                            </div>
+                        `;
+                        chapterWrapper.appendChild(row);
+                    });
+                    container.appendChild(chapterWrapper);
+                });
+            }
+            calculateProgress();
+        }
+
+        window.saveStatus = function(key) {
+            const checkbox = document.getElementById(key);
+            localStorage.setItem(key, checkbox.checked);
+            
+            const labelSpan = checkbox.nextElementSibling;
+            if(checkbox.checked) {
+                labelSpan.classList.remove('text-gray-400');
+                labelSpan.classList.add(key.includes('read') ? 'text-blue-400' : 'text-emerald-400');
+            } else {
+                labelSpan.classList.add('text-gray-400');
+                labelSpan.classList.remove('text-blue-400', 'text-emerald-400');
+            }
+            calculateProgress();
+        }
+
+        function calculateProgress() {
+            let totalItems = 0;
+            let checkedItems = 0;
+
+            for (let partKey in examData) {
+                examData[partKey].forEach(item => {
+                    totalItems += 2;
+                    if (localStorage.getItem(`${item.id}_read`) === 'true') checkedItems++;
+                    if (localStorage.getItem(`${item.id}_quiz`) === 'true') checkedItems++;
+                });
+            }
+
+            const percentage = totalItems > 0 ? Math.round((checkedItems / totalItems) * 100) : 0;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+            document.getElementById('progress-text').innerText = `${percentage}%`;
+        }
+
+        window.resetAllProgress = function() {
+            const isConfirmed = confirm('確定要清空所有已勾選的進度，重新開始讀嗎？');
+            if (isConfirmed) {
+                for (let partKey in examData) {
+                    examData[partKey].forEach(item => {
+                        localStorage.removeItem(`${item.id}_read`);
+                        localStorage.removeItem(`${item.id}_quiz`);
+                    });
+                }
+                renderLists();
+            }
+        }
+
+        /* ----------------------------------
+           燈箱 Modal 控制邏輯
+        ----------------------------------- */
+        window.openModal = function(id, title) {
+            document.getElementById('modal-title').innerText = `📖 ${title} 重點`;
+            const contentDiv = document.getElementById('modal-content');
+            
+            // 判斷 data-notes.js 是否有載入且包含該章節
+            if (typeof chapterNotes !== 'undefined' && chapterNotes[id]) {
+                contentDiv.innerHTML = chapterNotes[id];
+            } else {
+                contentDiv.innerHTML = `
+                    <div class="text-center py-10">
+                        <p class="text-gray-500 mb-2">🚧 本章節重點解析建置中...</p>
+                        <p class="text-xs text-gray-600">請確認 data-notes.js 中是否已填入 ${id} 的資料</p>
+                    </div>`;
+            }
+
+            const modal = document.getElementById('notes-modal');
+            modal.classList.remove('hidden');
+            // 防止背景頁面跟著滾動 (優化手機體驗)
+            document.body.style.overflow = 'hidden';
+        }
+
+        window.closeModal = function() {
+            const modal = document.getElementById('notes-modal');
+            modal.classList.add('hidden');
+            // 恢復背景頁面滾動
+            document.body.style.overflow = 'auto';
+        }
+
+        // 點擊燈箱背景 (黑色半透明區) 也可以關閉
+        document.getElementById('notes-modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // 首次載入執行
+        renderLists();
+    </script>
+</body>
+</html>
